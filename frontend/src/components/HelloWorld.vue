@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+<script setup>
+=======
 <script setup lang="ts">
+>>>>>>> 93605dc93ba8acbd3028dd4b617ef562149c633d
 import { ref } from 'vue'
 import viteLogo from '../assets/vite.svg'
 import heroImg from '../assets/hero.png'
