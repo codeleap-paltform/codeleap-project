@@ -1,5 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+<<<<<<< HEAD
+const routes = [
+  {
+    path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/login',
+    name: '登录页',
+    component: () => import('../views/Login.vue')
+  },
+  {
+    path: '/home',
+    name: '首页',
+=======
 // 路由规则：URL地址与Vue组件的映射关系
 const routes = [
   {
@@ -19,10 +34,24 @@ const routes = [
   {
     path: '/home',
     name: 'Home',
+>>>>>>> 09dc229a25f3a480d8922bf9e3b668917763e80e
     component: () => import('../views/home/Home.vue')
   },
   {
     path: '/task',
+<<<<<<< HEAD
+    name: '任务管理',
+    component: () => import('../views/task/TaskList.vue')
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+export default router
+=======
     name: 'Task',
     component: () => import('../views/task/TaskList.vue')
   },
@@ -44,3 +73,4 @@ const router = createRouter({
 })
 
 export default router
+>>>>>>> 09dc229a25f3a480d8922bf9e3b668917763e80e
