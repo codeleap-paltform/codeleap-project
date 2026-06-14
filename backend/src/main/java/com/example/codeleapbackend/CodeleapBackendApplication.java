@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@MapperScan("com.example.codeleapbackend.mapper") // 扫描mapper包下的所有接口
 public class CodeleapBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(CodeleapBackendApplication.class, args);
