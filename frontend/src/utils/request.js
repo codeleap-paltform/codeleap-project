@@ -1,15 +1,15 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
-// 创建一个Axios实例，统一管理所有请求配置
+// 创建axios请求实例
 const request = axios.create({
-  baseURL: 'http://10.224.183.107:8080', // 后端接口的基础地址，后续后端部署后只改这里
-  timeout: 5000 // 请求超时时间：5秒，防止请求一直挂起
+  baseURL: 'http://localhost:8080', // 后端服务地址，后端改端口这里跟着改
+  timeout: 10000 // 10秒超时
 })
 
-// 请求拦截器：在所有请求发送前执行
+// 请求拦截器：发请求之前统一处理
 request.interceptors.request.use(
   config => {
-    // 后续会在这里添加token，实现登录状态验证
     return config
   },
   error => {
@@ -17,15 +17,17 @@ request.interceptors.request.use(
   }
 )
 
-// 响应拦截器：在所有响应返回后执行
+// 响应拦截器：拿到接口返回后统一处理
 request.interceptors.response.use(
   response => {
-    // 直接返回后端统一的Result格式数据，省去每次写response.data
+    // 直接返回后端的业务数据，不用每次写 res.data.data
     return response.data
   },
   error => {
+    // 统一弹出网络错误提示
+    ElMessage.error('请求失败：' + (error.response?.data?.msg || error.message))
     return Promise.reject(error)
   }
 )
 
-export default request // 导出实例，供所有页面使用
+export default request

@@ -20,10 +20,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import request from '../../utils/request'
 import { useRouter } from 'vue-router'
-import request from '../../utils/request' // 导入我们封装的Axios
 
-const router = useRouter() // 获取路由实例，用来跳转页面
+const router = useRouter()
 
 // 定义用户对象，用来绑定表单输入
 const user = ref({
@@ -33,18 +34,31 @@ const user = ref({
 
 // 登录方法
 const login = async () => {
-  // 向后端发送POST请求，传递用户名和密码
-  const res = await request.post('/user/login', user.value)
-  
-  if (res.code === 200) {
-    // 登录成功：把后端返回的用户信息保存到浏览器本地存储
-    localStorage.setItem('user', JSON.stringify(res.data))
-    // 跳转到首页
-    alert('登录成功')
-    router.push('/home')
-  } else {
-    // 登录失败：弹出后端返回的错误信息
-    alert(res.msg)
+  // 前端简单校验：用户名密码不能为空
+  if (!user.value.username || !user.value.password) {
+    ElMessage.error('请输入用户名和密码')
+    return
+  }
+
+  try {
+    // 调用后端真实登录接口
+    const res = await request.post('/user/login', user.value)
+    
+    // 判断接口返回结果
+    if (res.code === 200) {
+      // 登录成功：把用户信息存到浏览器本地，后面页面会用到
+      localStorage.setItem('user', JSON.stringify(res.data))
+      ElMessage.success('登录成功')
+      // 跳转到首页
+      router.push('/home')
+    } else {
+      // 后端返回业务错误（比如密码错、用户不存在）
+      ElMessage.error(res.msg || '登录失败')
+    }
+  } catch (err) {
+    // 网络异常、后端没启动等报错
+    ElMessage.error('网络异常，请确认后端服务已启动')
+    console.error('登录接口报错：', err)
   }
 }
 </script>

@@ -24,6 +24,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
 
@@ -37,24 +38,30 @@ const user = ref({
 
 // 注册方法
 const register = async () => {
-  // 加上 try/catch 捕获所有错误
+  // 1. 前端非空校验
+  if (!user.value.username || !user.value.password || !user.value.email) {
+    ElMessage.error('请填写完整的注册信息')
+    return
+  }
+
   try {
-    // 向后端发送POST请求，传递用户名、密码和邮箱
-    const res = await request.post('/user/register', user.value)
+    // 2. 调用后端注册接口，传入用户名、密码、邮箱
+    const res = await request.post('/user/register', {
+      username: user.value.username,
+      password: user.value.password,
+      email: user.value.email
+    })
 
     if (res.code === 200) {
-      // 注册成功：提示用户并跳转到登录页
-      alert('注册成功，请登录')
+      ElMessage.success('注册成功，请登录')
+      // 注册成功自动跳转到登录页
       router.push('/login')
     } else {
-      // 注册失败：弹出后端返回的错误信息
-      alert(res.msg || '注册失败，请重试')
+      ElMessage.error(res.msg || '注册失败，用户名可能已存在')
     }
-  } catch (error) {
-    // 关键：捕获请求错误并打印日志
-    console.error('注册请求失败:', error)
-    // 给用户明确的提示
-    alert(`请求失败: ${error.message || '请检查后端是否正常运行'}`)
+  } catch (err) {
+    ElMessage.error('网络异常，请确认后端服务已启动')
+    console.error('注册接口报错：', err)
   }
 }
 </script>

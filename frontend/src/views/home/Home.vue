@@ -1,32 +1,45 @@
 <template>
   <div class="home-container">
-    <h1>欢迎来到 CodeLeap 平台！</h1>
-    <p>登录成功，这是系统首页</p>
+    <h1>欢迎来到 CodeLeap 平台</h1>
+    <p class="welcome-text" v-if="user.username">你好，{{ user.username }}</p>
+    <el-button type="danger" @click="logout">退出登录</el-button>
   </div>
 </template>
 
 <script setup>
-// 这里可以写首页的逻辑
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+// 初始化空对象，保证模板初次渲染不会报错
+const user = ref({})
+
+onMounted(() => {
+  const userInfo = localStorage.getItem('user')
+  if (userInfo) {
+    user.value = JSON.parse(userInfo)
+  } else {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+  }
+})
+
+const logout = () => {
+  localStorage.removeItem('user')
+  ElMessage.success('已退出登录')
+  router.push('/login')
+}
 </script>
 
 <style scoped>
 .home-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: Arial, sans-serif;
+  width: 400px;
+  margin: 100px auto;
+  text-align: center;
 }
-
-h1 {
-  font-size: 32px;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-p {
+.welcome-text {
   font-size: 18px;
-  color: #666;
+  margin: 20px 0;
 }
 </style>
