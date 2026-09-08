@@ -1,90 +1,64 @@
 <template>
-  <div class="login-container">
-    <div class="login-box">
-      <h2>CodeLeap 登录</h2>
-      <form @submit.prevent="login">
-        <div class="form-item">
-          <label>用户名</label>
-          <input type="text" v-model="user.username" placeholder="请输入用户名" required>
-        </div>
-        <div class="form-item">
-          <label>密码</label>
-          <input type="password" v-model="user.password" placeholder="请输入密码" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">登录</button>
-        <p class="register-link">没有账号？<router-link to="/register">立即注册</router-link></p>
-      </form>
-    </div>
+  <div class="auth-page">
+    <el-card class="auth-card" shadow="always">
+      <h1>欢迎回到码跃</h1>
+      <p class="subtitle">登录后继续管理你的学习任务</p>
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model.trim="form.username" autocomplete="username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" autocomplete="current-password" show-password placeholder="请输入密码" @keyup.enter="submit" />
+        </el-form-item>
+        <el-button class="submit-button" type="primary" :loading="loading" @click="submit">登录</el-button>
+      </el-form>
+      <p class="switch-link">没有账号？<router-link to="/register">立即注册</router-link></p>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import request from '../../utils/request' // 导入我们封装的Axios
+import { reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import request from '../../utils/request'
 
-const router = useRouter() // 获取路由实例，用来跳转页面
+const router = useRouter()
+const route = useRoute()
+const formRef = ref()
+const loading = ref(false)
+const form = reactive({ username: '', password: '' })
+const rules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 72, message: '密码长度必须为6到72位', trigger: 'blur' }
+  ]
+}
 
-// 定义用户对象，用来绑定表单输入
-const user = ref({
-  username: '',
-  password: ''
-})
-
-// 登录方法
-const login = async () => {
-  // 向后端发送POST请求，传递用户名和密码
-  const res = await request.post('/user/login', user.value)
-  
-  if (res.code === 200) {
-    // 登录成功：把后端返回的用户信息保存到浏览器本地存储
-    localStorage.setItem('user', JSON.stringify(res.data))
-    // 跳转到首页
-    alert('登录成功')
-    router.push('/home')
-  } else {
-    // 登录失败：弹出后端返回的错误信息
-    alert(res.msg)
+async function submit() {
+  if (loading.value) return
+  try {
+    await formRef.value.validate()
+    loading.value = true
+    const user = await request.post('/api/v1/users/login', form)
+    sessionStorage.setItem('user', JSON.stringify(user))
+    ElMessage.success('登录成功')
+    router.replace(typeof route.query.redirect === 'string' ? route.query.redirect : '/home')
+  } catch (error) {
+    if (error instanceof Error) ElMessage.error(error.message)
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.login-box {
-  width: 400px;
-  padding: 30px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.login-box h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #333;
-}
-
-.btn-block {
-  width: 100%;
-  margin-top: 10px;
-}
-
-.register-link {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
-}
-
-.register-link a {
-  color: #409eff;
-  text-decoration: none;
-}
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; background: linear-gradient(135deg, #ecf5ff, #f7f2ff); }
+.auth-card { width: min(420px, 100%); border: 0; border-radius: 16px; }
+h1 { margin: 4px 0 8px; font-size: 28px; color: #1f2937; }
+.subtitle { margin-bottom: 28px; color: #6b7280; }
+.submit-button { width: 100%; height: 42px; margin-top: 8px; }
+.switch-link { margin-top: 22px; text-align: center; color: #6b7280; }
+.switch-link a { color: #409eff; text-decoration: none; }
 </style>
