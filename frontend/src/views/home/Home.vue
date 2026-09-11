@@ -1,125 +1,94 @@
 <template>
-  <div class="home-container">
-    <!-- 头部导航 -->
-    <div class="header">
-      <h1>CodeLeap 任务管理系统</h1>
-      <div class="user-info">
+  <div class="page">
+    <header class="header">
+      <h1>码跃任务管理</h1>
+      <div class="user-area">
         <span>{{ user.username }}</span>
-        <button class="btn btn-primary" @click="logout">退出登录</button>
+        <el-button @click="passwordVisible = true">修改密码</el-button>
+        <el-button @click="logout">退出登录</el-button>
       </div>
-    </div>
-    
-    <!-- 导航栏 -->
-    <div class="nav">
-      <router-link to="/home" class="nav-item active">首页</router-link>
-      <router-link to="/task" class="nav-item">任务管理</router-link>
-    </div>
-    
-    <!-- 内容区 -->
-    <div class="content">
-      <div class="card">
-        <h3>欢迎使用CodeLeap任务管理系统</h3>
-        <p>这是一个简单的任务管理系统，支持用户注册、登录、任务的增删改查功能。</p>
-        <p>点击上方的"任务管理"按钮，开始管理你的任务吧！</p>
-      </div>
-    </div>
+    </header>
+    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link></nav>
+    <main class="content">
+      <el-card class="welcome-card">
+        <h2>你好，{{ user.username || '同学' }}</h2>
+        <p>把目标拆成清晰的小任务，然后一步一步完成。</p>
+        <el-button type="primary" @click="$router.push('/task')">查看我的任务</el-button>
+      </el-card>
+    </main>
+
+    <el-dialog v-model="passwordVisible" title="修改密码" width="min(440px, 92vw)" @closed="resetPasswordForm">
+      <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-position="top">
+        <el-form-item label="当前密码" prop="oldPassword"><el-input v-model="passwordForm.oldPassword" type="password" show-password /></el-form-item>
+        <el-form-item label="新密码" prop="newPassword"><el-input v-model="passwordForm.newPassword" type="password" show-password /></el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword"><el-input v-model="passwordForm.confirmPassword" type="password" show-password /></el-form-item>
+      </el-form>
+      <template #footer><el-button @click="passwordVisible = false">取消</el-button><el-button type="primary" :loading="changing" @click="changePassword">确认修改</el-button></template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import request from '../../utils/request'
 
 const router = useRouter()
+const user = ref(JSON.parse(sessionStorage.getItem('user') || '{}'))
+const passwordVisible = ref(false)
+const changing = ref(false)
+const passwordFormRef = ref()
+const passwordForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
+const validateConfirm = (_rule, value, callback) => value === passwordForm.newPassword ? callback() : callback(new Error('两次输入的新密码不一致'))
+const passwordRules = {
+  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 72, message: '新密码长度必须为6到72位', trigger: 'blur' }
+  ],
+  confirmPassword: [{ validator: validateConfirm, trigger: 'blur' }]
+}
 
-// 定义用户对象
-const user = ref({})
-
-// 页面加载时执行
-onMounted(() => {
-  // 从本地存储中获取用户信息
-  const userStr = localStorage.getItem('user')
-  if (userStr) {
-    user.value = JSON.parse(userStr)
-  } else {
-    // 如果没有登录，跳转到登录页
-    router.push('/login')
-  }
-})
-
-// 退出登录方法
-const logout = () => {
-  // 清除本地存储中的用户信息
-  localStorage.removeItem('user')
-  // 跳转到登录页
-  router.push('/login')
+function resetPasswordForm() {
+  passwordForm.oldPassword = ''
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+  passwordFormRef.value?.clearValidate()
+}
+async function changePassword() {
+  try {
+    await passwordFormRef.value.validate()
+    changing.value = true
+    await request.put('/api/v1/users/password', {
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    })
+    passwordVisible.value = false
+    sessionStorage.removeItem('user')
+    ElMessage.success('密码修改成功，请重新登录')
+    router.replace('/login')
+  } catch (error) {
+    if (error instanceof Error) ElMessage.error(error.message)
+  } finally { changing.value = false }
+}
+async function logout() {
+  try { await request.post('/api/v1/users/logout') } catch {}
+  sessionStorage.removeItem('user')
+  ElMessage.success('已退出登录')
+  router.replace('/login')
 }
 </script>
 
 <style scoped>
-.home-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  padding: 0 20px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header h1 {
-  font-size: 24px;
-  color: #409eff;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav {
-  display: flex;
-  background-color: white;
-  border-bottom: 1px solid #e6e6e6;
-}
-
-.nav-item {
-  padding: 15px 30px;
-  text-decoration: none;
-  color: #333;
-  font-size: 16px;
-}
-
-.nav-item.active {
-  color: #409eff;
-  border-bottom: 2px solid #409eff;
-}
-
-.content {
-  padding: 20px;
-}
-
-.card {
-  padding: 30px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card h3 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.card p {
-  margin-bottom: 10px;
-  color: #666;
-  line-height: 1.6;
-}
+.page { min-height: 100vh; background: #f5f7fa; }
+.header { min-height: 64px; padding: 8px 5%; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #fff; box-shadow: 0 1px 8px #00000012; }
+.header h1 { margin: 0; font-size: 22px; color: #409eff; }
+.user-area { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.nav { display: flex; gap: 28px; padding: 16px 5%; background: #fff; border-top: 1px solid #eee; }
+.nav a { color: #4b5563; text-decoration: none; }
+.nav a.router-link-active { color: #409eff; }
+.content { padding: 40px 5%; }
+.welcome-card { max-width: 760px; margin: auto; text-align: left; }
+.welcome-card p { margin: 12px 0 24px; color: #6b7280; }
 </style>
