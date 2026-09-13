@@ -1,285 +1,128 @@
 <template>
-  <div class="task-container">
-    <!-- 头部导航（和首页一样） -->
-    <div class="header">
-      <h1>CodeLeap 任务管理系统</h1>
-      <div class="user-info">
-        <span>{{ user.username }}</span>
-        <button class="btn btn-primary" @click="logout">退出登录</button>
-      </div>
-    </div>
-    
-    <!-- 导航栏（和首页一样） -->
-    <div class="nav">
-      <router-link to="/home" class="nav-item">首页</router-link>
-      <router-link to="/task" class="nav-item active">任务管理</router-link>
-    </div>
-    
-    <!-- 内容区 -->
-    <div class="content">
-      <div class="task-header">
-        <h2>我的任务</h2>
-        <button class="btn btn-primary" @click="showAddDialog = true">新增任务</button>
-      </div>
-      
-      <!-- 任务列表 -->
-      <div class="task-list">
-        <div class="task-item" v-for="task in taskList" :key="task.id">
-          <div class="task-info">
-            <h3 :class="{ 'task-done': task.status === 1 }">{{ task.title }}</h3>
-            <p>{{ task.content }}</p>
-            <span class="task-time">{{ task.createTime }}</span>
-          </div>
-          <div class="task-actions">
-            <button class="btn btn-success" @click="completeTask(task)" v-if="task.status === 0">完成</button>
-            <button class="btn btn-warning" @click="editTask(task)">编辑</button>
-            <button class="btn btn-danger" @click="deleteTask(task.id)">删除</button>
-          </div>
+  <div class="page">
+    <header class="header">
+      <h1>码跃任务管理</h1>
+      <div class="user-area"><span>{{ user.username }}</span><el-button @click="logout">退出登录</el-button></div>
+    </header>
+    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link></nav>
+    <main class="content">
+      <div class="task-heading"><div><h2>我的任务</h2><p>共 {{ tasks.length }} 项</p></div><el-button type="primary" @click="openCreate">新增任务</el-button></div>
+      <el-skeleton :loading="loading" :rows="4" animated>
+        <el-empty v-if="!tasks.length" description="还没有任务，先创建一个吧" />
+        <div v-else class="task-list">
+          <el-card v-for="task in tasks" :key="task.id" class="task-card">
+            <div class="task-info">
+              <h3 :class="{ done: task.status === 1 }">{{ task.title }}</h3>
+              <p>{{ task.content || '暂无描述' }}</p>
+              <small>{{ formatTime(task.createTime) }}</small>
+            </div>
+            <div class="actions">
+              <el-button :type="task.status === 1 ? 'info' : 'success'" @click="toggleStatus(task)">{{ task.status === 1 ? '设为未完成' : '完成' }}</el-button>
+              <el-button type="warning" @click="openEdit(task)">编辑</el-button>
+              <el-button type="danger" @click="removeTask(task)">删除</el-button>
+            </div>
+          </el-card>
         </div>
-      </div>
-    </div>
-    
-    <!-- 新增/编辑任务弹窗（用ElementPlus的弹窗组件） -->
-    <el-dialog v-model="showAddDialog" title="新增任务" width="500px">
-      <el-form :model="form" label-width="80px">
-        <el-form-item label="任务标题">
-          <el-input v-model="form.title" placeholder="请输入任务标题"></el-input>
-        </el-form-item>
-        <el-form-item label="任务内容">
-          <el-input v-model="form.content" type="textarea" rows="3" placeholder="请输入任务内容"></el-input>
-        </el-form-item>
+      </el-skeleton>
+    </main>
+
+    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑任务' : '新增任务'" width="min(500px, 92vw)" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-form-item label="任务标题" prop="title"><el-input v-model.trim="form.title" maxlength="100" show-word-limit /></el-form-item>
+        <el-form-item label="任务内容" prop="content"><el-input v-model="form.content" type="textarea" :rows="4" maxlength="1000" show-word-limit /></el-form-item>
       </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showAddDialog = false">取消</el-button>
-          <el-button type="primary" @click="submitForm">确定</el-button>
-        </span>
-      </template>
+      <template #footer><el-button @click="dialogVisible = false">取消</el-button><el-button type="primary" :loading="saving" @click="saveTask">保存</el-button></template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 
 const router = useRouter()
+const user = ref(JSON.parse(sessionStorage.getItem('user') || '{}'))
+const tasks = ref([])
+const loading = ref(true)
+const saving = ref(false)
+const dialogVisible = ref(false)
+const editingId = ref(null)
+const formRef = ref()
+const form = reactive({ title: '', content: '' })
+const rules = { title: [{ required: true, message: '请输入任务标题', trigger: 'blur' }] }
 
-const user = ref({})
-// 任务列表，先用模拟数据
-const taskList = ref([
-  { id: 1, title: '学习Vue3', content: '学习Vue3的基本语法', status: 0, createTime: '2024-05-20' },
-  { id: 2, title: '写任务管理页', content: '完成任务管理页的开发', status: 1, createTime: '2024-05-19' }
-])
-// 控制弹窗显示/隐藏
-const showAddDialog = ref(false)
-// 表单数据
-const form = ref({
-  title: '',
-  content: ''
-})
+onMounted(loadTasks)
 
-onMounted(() => {
-  const userStr = localStorage.getItem('user')
-  if (userStr) {
-    user.value = JSON.parse(userStr)
-    // 等后端接口写完后，取消下面的注释，获取真实的任务列表
-    // getTaskList()
-  } else {
-    router.push('/login')
+async function loadTasks() {
+  loading.value = true
+  try { tasks.value = await request.get('/api/v1/tasks') }
+  catch (error) { ElMessage.error(error.message) }
+  finally { loading.value = false }
+}
+function openCreate() { editingId.value = null; dialogVisible.value = true }
+function openEdit(task) { editingId.value = task.id; form.title = task.title; form.content = task.content || ''; dialogVisible.value = true }
+function resetForm() { editingId.value = null; form.title = ''; form.content = ''; formRef.value?.clearValidate() }
+async function saveTask() {
+  try {
+    await formRef.value.validate()
+    saving.value = true
+    if (editingId.value) {
+      const current = tasks.value.find(item => item.id === editingId.value)
+      await request.put('/api/v1/tasks/' + editingId.value, { ...form, status: current.status })
+    } else {
+      await request.post('/api/v1/tasks', form)
+    }
+    ElMessage.success(editingId.value ? '修改成功' : '创建成功')
+    dialogVisible.value = false
+    await loadTasks()
+  } catch (error) {
+    if (error instanceof Error) ElMessage.error(error.message)
+  } finally { saving.value = false }
+}
+async function toggleStatus(task) {
+  try {
+    await request.put('/api/v1/tasks/' + task.id, { title: task.title, content: task.content, status: task.status === 1 ? 0 : 1 })
+    await loadTasks()
+  } catch (error) { ElMessage.error(error.message) }
+}
+async function removeTask(task) {
+  try {
+    await ElMessageBox.confirm('确定删除“' + task.title + '”吗？', '删除任务', { type: 'warning' })
+    await request.delete('/api/v1/tasks/' + task.id)
+    ElMessage.success('删除成功')
+    await loadTasks()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close' && error instanceof Error) ElMessage.error(error.message)
   }
-})
-
-// 获取任务列表
-const getTaskList = async () => {
-  // const res = await request.get(`/task/user/${user.value.id}`)
-  // if (res.code === 200) {
-  //   taskList.value = res.data
-  // }
 }
-
-// 完成任务
-const completeTask = (task) => {
-  task.status = 1
-  // 等后端接口写完后，取消下面的注释
-  // await request.put('/task', task)
-  ElMessage.success('任务已完成')
-}
-
-// 编辑任务
-const editTask = (task) => {
-  form.value.title = task.title
-  form.value.content = task.content
-  showAddDialog.value = true
-  // 这里可以加一个标记，区分是新增还是编辑
-}
-
-// 删除任务
-const deleteTask = (id) => {
-  taskList.value = taskList.value.filter(item => item.id !== id)
-  // 等后端接口写完后，取消下面的注释
-  // await request.delete(`/task/${id}`)
-  ElMessage.success('删除成功')
-}
-
-// 提交表单
-const submitForm = () => {
-  if (!form.value.title) {
-    ElMessage.error('请输入任务标题')
-    return
-  }
-  // 新增任务
-  const newTask = {
-    id: Date.now(), // 用时间戳作为临时id
-    title: form.value.title,
-    content: form.value.content,
-    status: 0,
-    createTime: new Date().toLocaleDateString()
-  }
-  taskList.value.unshift(newTask)
-  // 等后端接口写完后，取消下面的注释
-  // const res = await request.post('/task', { ...form.value, userId: user.value.id })
-  // if (res.code === 200) {
-  //   ElMessage.success('新增成功')
-  //   getTaskList()
-  // }
-  showAddDialog.value = false
-  form.value = { title: '', content: '' }
-}
-
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
+function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN') : '' }
+async function logout() {
+  try { await request.post('/api/v1/users/logout') } catch {}
+  sessionStorage.removeItem('user')
+  router.replace('/login')
 }
 </script>
 
 <style scoped>
-.task-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  padding: 0 20px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header h1 {
-  font-size: 24px;
-  color: #409eff;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav {
-  display: flex;
-  background-color: white;
-  border-bottom: 1px solid #e6e6e6;
-}
-
-.nav-item {
-  padding: 15px 30px;
-  text-decoration: none;
-  color: #333;
-  font-size: 16px;
-}
-
-.nav-item.active {
-  color: #409eff;
-  border-bottom: 2px solid #409eff;
-}
-
-.content {
-  padding: 20px;
-}
-
-.task-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.task-header h2 {
-  color: #333;
-}
-
-.task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.task-info h3 {
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.task-info .task-done {
-  text-decoration: line-through;
-  color: #999;
-}
-
-.task-info p {
-  margin-bottom: 10px;
-  color: #666;
-}
-
-.task-time {
-  font-size: 12px;
-  color: #999;
-}
-
-.task-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-success {
-  background-color: #67c23a;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #85ce61;
-}
-
-.btn-warning {
-  background-color: #e6a23c;
-  color: white;
-}
-
-.btn-warning:hover {
-  background-color: #ebb563;
-}
-
-.btn-danger {
-  background-color: #f56c6c;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #f78989;
-}
+.page { min-height: 100vh; background: #f5f7fa; }
+.header { height: 64px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background: #fff; box-shadow: 0 1px 8px #00000012; }
+.header h1 { margin: 0; font-size: 22px; color: #409eff; }
+.user-area, .actions { display: flex; align-items: center; gap: 12px; }
+.nav { display: flex; gap: 28px; padding: 16px 5%; background: #fff; border-top: 1px solid #eee; }
+.nav a { color: #4b5563; text-decoration: none; }
+.nav a.router-link-active { color: #409eff; }
+.content { max-width: 1000px; margin: auto; padding: 36px 5%; }
+.task-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; text-align: left; }
+.task-heading h2 { margin: 0 0 6px; }
+.task-heading p { color: #9ca3af; }
+.task-list { display: grid; gap: 14px; }
+.task-card :deep(.el-card__body) { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.task-info { min-width: 0; text-align: left; }
+.task-info h3 { margin: 0 0 8px; color: #1f2937; }
+.task-info h3.done { color: #9ca3af; text-decoration: line-through; }
+.task-info p { margin-bottom: 8px; color: #6b7280; overflow-wrap: anywhere; }
+.task-info small { color: #9ca3af; }
+@media (max-width: 680px) { .task-card :deep(.el-card__body) { align-items: stretch; flex-direction: column; } .actions { flex-wrap: wrap; } }
 </style>

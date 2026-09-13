@@ -1,31 +1,26 @@
 import axios from 'axios'
 
-// 创建一个axios实例，统一管理所有请求配置
 const request = axios.create({
-  baseURL: 'http://10.224.183.107:8080', // 后端接口的基础地址，后续后端部署后只改这里
-  timeout: 5000 // 请求超时时间，5秒，防止请求一直挂着
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  timeout: 10000,
+  withCredentials: true
 })
 
-// 请求拦截器：在所有请求发送前执行
-request.interceptors.request.use(
-  config => {
-    // 后续会在这里添加token，实现登录状态验证
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
-)
-
-// 响应拦截器：在所有响应返回后执行
 request.interceptors.response.use(
   response => {
-    // 直接返回后端统一的Result格式数据，省去每次写response.data
-    return response.data
+    const result = response.data
+    if (result.code !== 2000) {
+      return Promise.reject(new Error(result.msg || '鎿嶄綔澶辫触'))
+    }
+    return result.data
   },
   error => {
-    return Promise.reject(error)
+    if (error.response?.status === 401) {
+      sessionStorage.removeItem('user')
+    }
+    const message = error.response?.data?.msg || error.message || '缃戠粶璇锋眰澶辫触'
+    return Promise.reject(new Error(message))
   }
 )
 
-export default request // 导出实例，供所有页面使用
+export default request
