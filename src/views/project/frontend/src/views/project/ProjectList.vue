@@ -23,7 +23,7 @@
         <el-button style="margin-top: 14px" @click="loadProjects">重新加载</el-button>
       </div>
       <!-- 状态3：空列表（请求成功但数组为空） -->
-      <el-empty v-else-if="projects.length === 0" description="还没有项目，点击右上角"创建项目"开始吧" />
+      <el-empty v-else-if="projects.length === 0" description="还没有项目，点击右上角“创建项目”开始吧" />
       <!-- 状态4：成功列表 -->
       <div v-else class="project-list">
         <el-card v-for="project in projects" :key="project.id" class="project-card">
