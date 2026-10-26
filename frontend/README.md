@@ -1,13 +1,11 @@
-<<<<<<< HEAD
-# Vue 3 + Vite
+# 码跃前端
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3、Vite、Vue Router、Axios 和 Element Plus 构建的任务管理前端。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
-=======
-# Vue 3 + TypeScript + Vite
+## 本地运行
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+1. 复制 `.env.example` 为 `.env.local`，按需修改后端地址。
+2. 运行 `npm install`。
+3. 运行 `npm run dev`。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
->>>>>>> 93605dc93ba8acbd3028dd4b617ef562149c633d
+后端默认地址为 `http://localhost:8080`。登录使用服务端会话Cookie，前后端地址必须与后端CORS配置一致。

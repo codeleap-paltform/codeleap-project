@@ -1,100 +1,75 @@
 <template>
-  <div class="register-container">
-    <div class="register-box">
-      <h2>CodeLeap 注册</h2>
-      <form @submit.prevent="register">
-        <div class="form-item">
-          <label>用户名</label>
-          <input type="text" v-model="user.username" placeholder="请输入用户名" required>
-        </div>
-        <div class="form-item">
-          <label>密码</label>
-          <input type="password" v-model="user.password" placeholder="请输入密码" required>
-        </div>
-        <div class="form-item">
-          <label>邮箱</label>
-          <input type="email" v-model="user.email" placeholder="请输入邮箱" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">注册</button>
-        <p class="login-link">已有账号？<router-link to="/login">立即登录</router-link></p>
-      </form>
-    </div>
+  <div class="auth-page">
+    <el-card class="auth-card" shadow="always">
+      <h1>创建码跃账号</h1>
+      <p class="subtitle">从一个清晰的任务开始</p>
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model.trim="form.username" maxlength="50" autocomplete="username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" show-password autocomplete="new-password" placeholder="至少6位密码" />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" placeholder="请再次输入密码" @keyup.enter="submit" />
+        </el-form-item>
+        <el-button class="submit-button" type="primary" :loading="loading" @click="submit">注册</el-button>
+      </el-form>
+      <p class="switch-link">已有账号？<router-link to="/login">返回登录</router-link></p>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
 
 const router = useRouter()
+const formRef = ref()
+const loading = ref(false)
+const form = reactive({ username: '', password: '', confirmPassword: '' })
+const validateConfirm = (_rule, value, callback) => {
+  value === form.password ? callback() : callback(new Error('两次输入的密码不一致'))
+}
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { max: 50, message: '用户名不能超过50个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 72, message: '密码长度必须为6到72位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: validateConfirm, trigger: 'blur' }
+  ]
+}
 
-const user = ref({
-  username: '',
-  password: '',
-  email: '',
-})
-
-// 注册方法
-const register = async () => {
-  // 加上 try/catch 捕获所有错误
+async function submit() {
+  if (loading.value) return
   try {
-    // 向后端发送POST请求，传递用户名、密码和邮箱
-    const res = await request.post('/user/register', user.value)
-
-    if (res.code === 200) {
-      // 注册成功：提示用户并跳转到登录页
-      alert('注册成功，请登录')
-      router.push('/login')
-    } else {
-      // 注册失败：弹出后端返回的错误信息
-      alert(res.msg || '注册失败，请重试')
-    }
+    await formRef.value.validate()
+    loading.value = true
+    await request.post('/api/v1/users/register', { username: form.username, password: form.password })
+    ElMessage.success('注册成功，请登录')
+    router.replace('/login')
   } catch (error) {
-    // 关键：捕获请求错误并打印日志
-    console.error('注册请求失败:', error)
-    // 给用户明确的提示
-    alert(`请求失败: ${error.message || '请检查后端是否正常运行'}`)
+    if (error instanceof Error) ElMessage.error(error.message)
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.register-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.register-box {
-  width: 400px;
-  padding: 30px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.register-box h2 {
-  text-align: center;
-  margin-bottom: 30;
-  color: #333;
-}
-
-.btn-block {
-  width: 100%;
-  margin-top: 10px;
-}
-
-.login-link {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
-}
-
-.login-link a {
-  color: #409eff;
-  text-decoration: none;
-}
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; background: linear-gradient(135deg, #ecf5ff, #f7f2ff); }
+.auth-card { width: min(420px, 100%); border: 0; border-radius: 16px; }
+h1 { margin: 4px 0 8px; font-size: 28px; color: #1f2937; }
+.subtitle { margin-bottom: 28px; color: #6b7280; }
+.submit-button { width: 100%; height: 42px; margin-top: 8px; }
+.switch-link { margin-top: 22px; text-align: center; color: #6b7280; }
+.switch-link a { color: #409eff; text-decoration: none; }
 </style>
