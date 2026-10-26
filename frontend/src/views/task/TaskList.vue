@@ -4,7 +4,7 @@
       <h1>码跃任务管理</h1>
       <div class="user-area"><span>{{ user.username }}</span><el-button @click="logout">退出登录</el-button></div>
     </header>
-    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link></nav>
+    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link><router-link to="/project">项目管理</router-link></nav>
     <main class="content">
       <div class="task-heading"><div><h2>我的任务</h2><p>共 {{ tasks.length }} 项</p></div><el-button type="primary" @click="openCreate">新增任务</el-button></div>
       <el-skeleton :loading="loading" :rows="4" animated>

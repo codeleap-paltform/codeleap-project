@@ -8,7 +8,7 @@
         <el-button @click="logout">退出登录</el-button>
       </div>
     </header>
-    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link></nav>
+    <nav class="nav"><router-link to="/home">首页</router-link><router-link to="/task">任务管理</router-link><router-link to="/project">项目管理</router-link></nav>
     <main class="content">
       <el-card class="welcome-card">
         <h2>你好，{{ user.username || '同学' }}</h2>
