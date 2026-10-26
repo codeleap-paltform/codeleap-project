@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import request from '../utils/request'
+
 const routes = [
   { path: '/', redirect: '/home' },
   { path: '/login', name: 'Login', component: () => import('../views/login/Login.vue'), meta: { guestOnly: true } },
@@ -10,7 +11,9 @@ const routes = [
   { path: '/404', name: 'NotFound', component: () => import('../views/404.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/404' }
 ]
+
 const router = createRouter({ history: createWebHistory(), routes })
+
 router.beforeEach(async to => {
   if (!to.meta.requiresAuth && !to.meta.guestOnly) return true
   try {
@@ -22,4 +25,5 @@ router.beforeEach(async to => {
     return to.meta.requiresAuth ? { path: '/login', query: { redirect: to.fullPath } } : true
   }
 })
+
 export default router
