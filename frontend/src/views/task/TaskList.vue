@@ -25,6 +25,7 @@
         </div>
       </el-skeleton>
     </main>
+
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑任务' : '新增任务'" width="min(500px, 92vw)" @closed="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="任务标题" prop="title"><el-input v-model.trim="form.title" maxlength="100" show-word-limit /></el-form-item>
@@ -34,11 +35,13 @@
     </el-dialog>
   </div>
 </template>
+
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
+
 const router = useRouter()
 const user = ref(JSON.parse(sessionStorage.getItem('user') || '{}'))
 const tasks = ref([])
@@ -49,7 +52,9 @@ const editingId = ref(null)
 const formRef = ref()
 const form = reactive({ title: '', content: '' })
 const rules = { title: [{ required: true, message: '请输入任务标题', trigger: 'blur' }] }
+
 onMounted(loadTasks)
+
 async function loadTasks() {
   loading.value = true
   try { tasks.value = await request.get('/api/v1/tasks') }
@@ -99,6 +104,7 @@ async function logout() {
   router.replace('/login')
 }
 </script>
+
 <style scoped>
 .page { min-height: 100vh; background: #f5f7fa; }
 .header { height: 64px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background: #fff; box-shadow: 0 1px 8px #00000012; }
