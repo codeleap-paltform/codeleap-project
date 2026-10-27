@@ -1,0 +1,127 @@
+### 0. 未登录测试1：GET 列表
+GET http://localhost:8080/api/v1/projects
+
+### 0. 未登录测试2：POST 创建
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "未登录创建"
+}
+
+### 1. 注册账号A（如果已存在可能会报错，忽略即可）
+POST http://localhost:8080/api/v1/users/register
+Content-Type: application/json
+
+{
+  "username": "userA",
+  "password": "password123"
+}
+
+### 2. 登录账号A（IDEA 会自动记住这里返回的 Cookie）
+POST http://localhost:8080/api/v1/users/login
+Content-Type: application/json
+
+{
+  "username": "userA",
+  "password": "password123"
+}
+
+### 3. 账号A 创建 A1
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "A1",
+  "description": "A的项目1"
+}
+
+### 4. 账号A 创建 A2
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "A2",
+  "description": "A的项目2"
+}
+
+### 5. 账号A 查询列表（验证倒序：A2 应该在 A1 前面）
+GET http://localhost:8080/api/v1/projects
+
+### 6. 注册账号B
+POST http://localhost:8080/api/v1/users/register
+Content-Type: application/json
+
+{
+  "username": "userB",
+  "password": "password123"
+}
+
+### 7. 登录账号B（注意：这会覆盖掉账号A的 Cookie）
+POST http://localhost:8080/api/v1/users/login
+Content-Type: application/json
+
+{
+  "username": "userB",
+  "password": "password123"
+}
+
+### 8. 账号B 查询列表（验证隔离：应该是空的 `[]`）
+GET http://localhost:8080/api/v1/projects
+
+### 9. 账号B 创建 B1
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "B1",
+  "description": "B的项目1"
+}
+
+### 10. 账号B 查询列表（只能看到 B1）
+GET http://localhost:8080/api/v1/projects
+
+### 11. 重新登录账号A
+POST http://localhost:8080/api/v1/users/login
+Content-Type: application/json
+
+{
+  "username": "userA",
+  "password": "password123"
+}
+
+### 12. 账号A 查询列表（依然只有 A1, A2）
+GET http://localhost:8080/api/v1/projects
+
+### 13. 参数校验：空名称
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "description": "没名字"
+}
+
+### 14. 参数校验：全空格
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "   "
+}
+
+### 15. 参数校验：超长字段（101个字符）
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+}
+
+### 16. 伪造 ownerId 测试（传入 99999）
+POST http://localhost:8080/api/v1/projects
+Content-Type: application/json
+
+{
+  "name": "伪造测试",
+  "ownerId": 99999
+}
