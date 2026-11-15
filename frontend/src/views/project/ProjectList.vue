@@ -23,10 +23,15 @@
       <el-empty v-else-if="projects.length === 0" description="还没有项目，点击右上角“创建项目”开始吧" />
       <div v-else class="project-list">
         <el-card v-for="project in projects" :key="project.id" class="project-card">
-          <div class="project-info">
-            <h3>{{ project.name }}</h3>
-            <p>{{ project.description || '暂无描述' }}</p>
-            <small>{{ formatTime(project.createTime) }}</small>
+          <div class="project-body">
+            <div class="project-info">
+              <h3>{{ project.name }}</h3>
+              <p>{{ project.description || '暂无描述' }}</p>
+              <small>{{ formatTime(project.createTime) }}</small>
+            </div>
+            <div class="project-actions">
+              <el-button type="primary" plain size="small" @click="openDetail(project.id)">查看详情</el-button>
+            </div>
           </div>
         </el-card>
       </div>
@@ -64,6 +69,11 @@ async function loadProjects() {
   }
 }
 
+// 只把编号带进路由，详情页自己再去查一遍，不靠这里的内存对象
+function openDetail(id) {
+  router.push({ name: 'ProjectDetail', params: { id: String(id) } })
+}
+
 function formatTime(value) {
   return value ? new Date(value).toLocaleString('zh-CN') : ''
 }
@@ -88,9 +98,11 @@ async function logout() {
 .project-heading h2 { margin: 0 0 6px; }
 .project-heading p { color: #9ca3af; }
 .project-list { display: grid; gap: 14px; }
+.project-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .project-info { text-align: left; }
 .project-info h3 { margin: 0 0 8px; color: #1f2937; }
 .project-info p { margin-bottom: 8px; color: #6b7280; overflow-wrap: anywhere; }
 .project-info small { color: #9ca3af; }
+.project-actions { flex: none; }
 .error-tip { text-align: center; }
 </style>
