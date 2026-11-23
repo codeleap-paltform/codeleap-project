@@ -84,6 +84,9 @@ const isIdValid = computed(() => /^[1-9]\d*$/.test(projectId.value))
 let latestSeq = 0
 
 async function loadProject() {
+  // 每次调用先作废在途旧请求，切到非法编号也能作废
+  const seq = ++latestSeq
+
   if (!isIdValid.value) {
     project.value = null
     errorMessage.value = ''
@@ -91,7 +94,6 @@ async function loadProject() {
     return
   }
 
-  const seq = ++latestSeq
   loading.value = true
   errorMessage.value = ''
 
