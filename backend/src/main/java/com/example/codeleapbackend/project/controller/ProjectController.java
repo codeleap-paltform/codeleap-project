@@ -1,7 +1,9 @@
 package com.example.codeleapbackend.project.controller;
 
 import com.example.codeleapbackend.common.Result;
+import com.example.codeleapbackend.common.StatusCode;
 import com.example.codeleapbackend.project.pojo.dto.CreateProjectParam;
+import com.example.codeleapbackend.project.pojo.dto.UpdateProjectParam;
 import com.example.codeleapbackend.project.service.ProjectService;
 import com.example.codeleapbackend.user.controller.UserController;
 import jakarta.servlet.http.HttpSession;
@@ -29,5 +31,28 @@ public class ProjectController {
     @GetMapping
     public Result list(HttpSession session) {
         return Result.ok(projectService.listByOwner(currentUserId(session)));
+    }
+
+    // 项目详情
+    @GetMapping("/{id}")
+    public Result getDetail(@PathVariable Long id, HttpSession session) {
+        if (id == null || id <= 0) {
+            return new Result(StatusCode.VALIDATE_ERROR);
+        }
+        Long ownerId = currentUserId(session);
+        return Result.ok(projectService.getOwnedProject(ownerId, id));
+    }
+
+    // 编辑项目
+    @PutMapping("/{id}")
+    public Result update(@PathVariable Long id,
+                         @Valid @RequestBody UpdateProjectParam param,
+                         HttpSession session) {
+        if (id == null || id <= 0) {
+            return new Result(StatusCode.VALIDATE_ERROR);
+        }
+        Long ownerId = currentUserId(session);
+        return Result.ok(projectService.updateOwnedProject(
+                ownerId, id, param.getName(), param.getDescription()));
     }
 }
