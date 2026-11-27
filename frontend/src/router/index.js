@@ -7,6 +7,7 @@ const routes = [
   { path: '/register', name: 'Register', component: () => import('../views/login/Register.vue'), meta: { guestOnly: true } },
   { path: '/home', name: 'Home', component: () => import('../views/home/Home.vue'), meta: { requiresAuth: true } },
   { path: '/task', name: 'Task', component: () => import('../views/task/TaskList.vue'), meta: { requiresAuth: true } },
+  { path: '/project', name: 'Project', component: () => import('../views/project/ProjectList.vue'), meta: { requiresAuth: true } },
   { path: '/404', name: 'NotFound', component: () => import('../views/404.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/404' }
 ]

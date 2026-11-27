@@ -23,6 +23,19 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: codeleap_project_test_ci
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
     defaults:
       run:
         working-directory: backend
@@ -35,3 +48,7 @@ jobs:
           cache: maven
       - run: chmod +x mvnw
       - run: ./mvnw test
+        env:
+          PROJECT_MYSQL_TEST_URL: jdbc:mysql://127.0.0.1:${{ job.services.mysql.ports['3306'] }}/codeleap_project_test_ci?serverTimezone=UTC&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+          PROJECT_MYSQL_TEST_USERNAME: root
+          PROJECT_MYSQL_TEST_PASSWORD: ''

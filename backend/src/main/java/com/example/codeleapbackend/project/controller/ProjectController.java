@@ -9,12 +9,10 @@ import com.example.codeleapbackend.user.controller.UserController;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/v1/projects")
 public class ProjectController {
     private final ProjectService projectService;
-
     public ProjectController(ProjectService projectService) {
         this.projectService = projectService;
     }
@@ -32,7 +30,6 @@ public class ProjectController {
     public Result list(HttpSession session) {
         return Result.ok(projectService.listByOwner(currentUserId(session)));
     }
-
     // 项目详情
     @GetMapping("/{id}")
     public Result getDetail(@PathVariable Long id, HttpSession session) {
