@@ -14,6 +14,7 @@ public interface ProjectService extends IService<Project> {
 
     /** 查询当前用户创建的项目，按创建时间倒序 */
     List<ProjectVO> listByOwner(Long ownerId);
+
     /**
      * 查询当前用户拥有的指定项目。
      *
@@ -22,6 +23,7 @@ public interface ProjectService extends IService<Project> {
      * @return 项目详情
      */
     ProjectVO getOwnedProject(Long ownerId, Long projectId);
+
     /**
      * 修改当前用户拥有的指定项目的名称和描述。
      *
