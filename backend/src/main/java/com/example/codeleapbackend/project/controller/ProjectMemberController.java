@@ -24,12 +24,12 @@ public class ProjectMemberController {
     }
 
     @GetMapping
-    public Result list(@PathVariable Long projectId, HttpSession session) {
+    public Result list(@PathVariable Long projectId,HttpSession session) {
         if (projectId == null || projectId <= 0) {
             return new Result(StatusCode.VALIDATE_ERROR);
         }
         Long userId = currentUserId(session);
-        return Result.ok(projectMemberService.listMembers(projectId, userId));
+        return Result.ok(projectMemberService.listMembers(userId,projectId));
     }
 
     @PostMapping
@@ -40,6 +40,6 @@ public class ProjectMemberController {
             return new Result(StatusCode.VALIDATE_ERROR);
         }
         Long userId = currentUserId(session);
-        return Result.ok(projectMemberService.addMember(projectId, userId, param));
+        return Result.ok(projectMemberService.addMember(userId,projectId, param.getUsername()));
     }
 }

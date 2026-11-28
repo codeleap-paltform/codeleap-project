@@ -7,6 +7,7 @@ import com.example.codeleapbackend.project.mapper.ProjectMapper;
 import com.example.codeleapbackend.project.pojo.dto.CreateProjectParam;
 import com.example.codeleapbackend.project.pojo.entity.Project;
 import com.example.codeleapbackend.project.pojo.vo.ProjectVO;
+import com.example.codeleapbackend.project.service.ProjectMemberService;
 import com.example.codeleapbackend.project.service.ProjectService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,9 +106,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
                 .eq(Project::getOwnerId, userId)
                 .list();
         // 2. 查自己加入的
-        // 假设 ProjectMemberService 有个方法叫 listProjectIdsByUserId(userId)
-        // 你需要在 ProjectServiceImpl 里注入 ProjectMemberService
-        List<Long> joinedProjectIds = projectMemberService.listProjectIdsByUserId(userId);
+        List<Long> joinedProjectIds = projectMemberService.listJoinedProjectIds(userId);
 
         List<Project> joinedProjects = new ArrayList<>();
         if (joinedProjectIds != null && !joinedProjectIds.isEmpty()) {
@@ -142,8 +141,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
         }
 
         // 3. 如果是成员
-        // 假设方法是 isMember(projectId, userId)
-        if (projectMemberService.isMember(projectId, userId)) {
+        if (projectMemberService.isMember( userId,projectId)) {
             return ProjectVO.from(project, "MEMBER");
         }
 
