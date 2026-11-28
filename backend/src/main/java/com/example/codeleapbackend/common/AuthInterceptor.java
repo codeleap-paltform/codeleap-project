@@ -22,7 +22,6 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (HttpMethod.OPTIONS.matches(request.getMethod())) {
             return true;
         }
-        //
         Object userId = request.getSession(false) == null ? null
                 : request.getSession(false).getAttribute(UserController.SESSION_USER_ID);
         if (userId != null) {

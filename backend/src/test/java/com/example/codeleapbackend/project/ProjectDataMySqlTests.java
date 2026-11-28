@@ -78,12 +78,22 @@ class ProjectDataMySqlTests {
         assertThat(jdbc.queryForObject("SELECT @@SESSION.sql_mode", String.class))
                 .as("length and NOT NULL checks require MySQL strict mode").contains("STRICT_");
 
-        Path script = Path.of("..", "docs", "project-v0.sql");
-        if (!Files.isRegularFile(script)) {
-            script = Path.of("docs", "project-v0.sql");
+        // 1. 执行 v0 脚本 (只建 project 表)
+        Path scriptV0 = Path.of("..", "docs", "project-v0.sql");
+        if (!Files.isRegularFile(scriptV0)) {
+            scriptV0 = Path.of("docs", "project-v0.sql");
         }
         try (Connection connection = jdbc.getDataSource().getConnection()) {
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource(script));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource(scriptV0));
+        }
+
+        // 2. 用同样的方式接着执行 v1 脚本 (建 project_member 表)
+        Path scriptV1 = Path.of("..", "docs", "project-member-v1.sql");
+        if (!Files.isRegularFile(scriptV1)) {
+            scriptV1 = Path.of("docs", "project-member-v1.sql");
+        }
+        try (Connection connection = jdbc.getDataSource().getConnection()) {
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource(scriptV1));
         }
     }
 
