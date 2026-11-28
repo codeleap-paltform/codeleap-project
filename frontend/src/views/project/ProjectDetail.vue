@@ -236,4 +236,43 @@ function handleUpdated() {
 }
 
 function goProjectList() {
-  // 列表页重新挂载时会 onMounted 重新取数据，返回后能看到新名称和
+  // 列表页重新挂载时会 onMounted 重新取数据，返回后能看到新名称和描述
+  router.push('/project')
+}
+
+function formatTime(value) {
+  return value ? new Date(value).toLocaleString('zh-CN') : ''
+}
+
+async function logout() {
+  try { await request.post('/api/v1/users/logout') } catch {}
+  sessionStorage.removeItem('user')
+  router.replace('/login')
+}
+</script>
+
+<style scoped>
+.page { min-height: 100vh; background: #f5f7fa; }
+.header { height: 64px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background: #fff; box-shadow: 0 1px 8px #00000012; }
+.header h1 { margin: 0; font-size: 22px; color: #409eff; }
+.user-area { display: flex; align-items: center; gap: 12px; }
+.nav { display: flex; gap: 28px; padding: 16px 5%; background: #fff; border-top: 1px solid #eee; }
+.nav a { color: #4b5563; text-decoration: none; }
+.nav a.router-link-active { color: #409eff; }
+.content { max-width: 1000px; margin: auto; padding: 24px 5% 36px; }
+.detail-toolbar { margin-bottom: 18px; text-align: left; }
+.detail-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; text-align: left; }
+.detail-heading h2 { margin: 0 0 8px; color: #1f2937; overflow-wrap: anywhere; }
+.detail-heading p { margin: 0; color: #9ca3af; }
+.detail-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.detail-card { text-align: left; margin-bottom: 16px; }
+.detail-label { margin: 0 0 10px; color: #9ca3af; font-size: 13px; }
+.detail-description { margin: 0; color: #4b5563; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.member-card { margin-bottom: 0; }
+.member-head { display: flex; justify-content: space-between; align-items: center; }
+.member-head .detail-label { margin: 0; }
+.member-list { list-style: none; margin: 0; padding: 0; }
+.member-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.member-item:last-child { border-bottom: none; }
+.member-name { color: #374151; overflow-wrap: anywhere; }
+</style>
