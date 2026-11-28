@@ -25,7 +25,23 @@
         <el-card v-for="project in projects" :key="project.id" class="project-card">
           <div class="project-body">
             <div class="project-info">
-              <h3>{{ project.name }}</h3>
+              <h3>
+                {{ project.name }}
+                <!-- 角色小标注：OWNER 是我创建的，MEMBER 是别人把我加进来的。
+                     角色由后端返回（myRole），前端只负责显示 -->
+                <el-tag
+                  v-if="project.myRole === 'OWNER'"
+                  type="warning"
+                  size="small"
+                  effect="plain"
+                >我创建的</el-tag>
+                <el-tag
+                  v-else-if="project.myRole === 'MEMBER'"
+                  type="info"
+                  size="small"
+                  effect="plain"
+                >我参与的</el-tag>
+              </h3>
               <p>{{ project.description || '暂无描述' }}</p>
               <small>{{ formatTime(project.createTime) }}</small>
             </div>
@@ -101,6 +117,7 @@ async function logout() {
 .project-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .project-info { text-align: left; }
 .project-info h3 { margin: 0 0 8px; color: #1f2937; }
+.project-info h3 .el-tag { margin-left: 8px; vertical-align: middle; }
 .project-info p { margin-bottom: 8px; color: #6b7280; overflow-wrap: anywhere; }
 .project-info small { color: #9ca3af; }
 .project-actions { flex: none; }
