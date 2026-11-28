@@ -35,4 +35,9 @@ public interface ProjectService extends IService<Project> {
      */
     ProjectVO updateOwnedProject(Long ownerId, Long projectId,
                                  String name, String description);
+    // 查询当前用户可见的所有项目（自己创建的 + 加入的），带 myRole
+    List<ProjectVO> listVisibleProjects(Long userId);
+
+    //获取当前用户可见的特定项目详情（创建者或成员），带 myRole
+    ProjectVO getVisibleProject(Long projectId, Long userId);
 }

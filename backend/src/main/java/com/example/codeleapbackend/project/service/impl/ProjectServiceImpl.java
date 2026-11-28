@@ -12,12 +12,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
         implements ProjectService {
+    private final ProjectMemberService projectMemberService;
 
+    public ProjectServiceImpl(ProjectMemberService projectMemberService) {
+        this.projectMemberService = projectMemberService;
+    }
     @Override
     @Transactional
     public ProjectVO create(Long ownerId, CreateProjectParam param) {
@@ -94,4 +98,56 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
         // 从数据库重新读取，返回保存后的详情。
         return getOwnedProject(ownerId, projectId);
     }
+    @Override
+    public List<ProjectVO> listVisibleProjects(Long userId){
+        // 1. 查自己创建的
+        List<Project> ownedProjects = lambdaQuery()
+                .eq(Project::getOwnerId, userId)
+                .list();
+        // 2. 查自己加入的
+        // 假设 ProjectMemberService 有个方法叫 listProjectIdsByUserId(userId)
+        // 你需要在 ProjectServiceImpl 里注入 ProjectMemberService
+        List<Long> joinedProjectIds = projectMemberService.listProjectIdsByUserId(userId);
+
+        List<Project> joinedProjects = new ArrayList<>();
+        if (joinedProjectIds != null && !joinedProjectIds.isEmpty()) {
+            joinedProjects = lambdaQuery()
+                    .in(Project::getId, joinedProjectIds)
+                    .list();
+        }
+
+        // 3. 合并去重并按时间倒序
+        Map<Long, Project> distinctProjects = new HashMap<>();
+        for (Project p : ownedProjects) distinctProjects.put(p.getId(), p);
+        for (Project p : joinedProjects) distinctProjects.put(p.getId(), p);
+
+        // 4. 转成 VO 并赋予角色
+        return distinctProjects.values().stream()
+                .map(p -> ProjectVO.from(p, p.getOwnerId().equals(userId) ? "OWNER" : "MEMBER"))
+                .sorted(Comparator.comparing(ProjectVO::getCreateTime).reversed()
+                        .thenComparing(ProjectVO::getId, Comparator.reverseOrder()))
+                .toList();
+    }
+    @Override
+    public ProjectVO getVisibleProject(Long projectId, Long userId){
+        // 1. 查项目本身
+        Project project = getById(projectId);
+        if (project == null) {
+            throw new ServiceException(StatusCode.DATA_UNEXISTS);
+        }
+
+        // 2. 判断角色
+        if (project.getOwnerId().equals(userId)) {
+            return ProjectVO.from(project, "OWNER");
+        }
+
+        // 3. 如果是成员
+        // 假设方法是 isMember(projectId, userId)
+        if (projectMemberService.isMember(projectId, userId)) {
+            return ProjectVO.from(project, "MEMBER");
+        }
+
+        // 4. 既不是创建者也不是成员，报错
+        throw new ServiceException(StatusCode.DATA_UNEXISTS);
+    };
 }

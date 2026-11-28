@@ -25,19 +25,20 @@ public class ProjectController {
     public Result add(@Valid @RequestBody CreateProjectParam param, HttpSession session) {
         return Result.ok(projectService.create(currentUserId(session), param));
     }
-
     @GetMapping
+    //修改查询，让只查自己的变为查可见的
     public Result list(HttpSession session) {
-        return Result.ok(projectService.listByOwner(currentUserId(session)));
+        Long userId = currentUserId(session);
+        return Result.ok(projectService.listVisibleProjects(userId));
     }
-    // 项目详情
     @GetMapping("/{id}")
+    //同样修改查询，让只查自己变为查可见
     public Result getDetail(@PathVariable Long id, HttpSession session) {
         if (id == null || id <= 0) {
             return new Result(StatusCode.VALIDATE_ERROR);
         }
         Long ownerId = currentUserId(session);
-        return Result.ok(projectService.getOwnedProject(ownerId, id));
+        return Result.ok(projectService.getVisibleProject(id, ownerId));
     }
 
     // 编辑项目
@@ -52,4 +53,5 @@ public class ProjectController {
         return Result.ok(projectService.updateOwnedProject(
                 ownerId, id, param.getName(), param.getDescription()));
     }
+
 }
