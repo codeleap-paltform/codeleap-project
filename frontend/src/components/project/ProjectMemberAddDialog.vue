@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { addProjectMember } from '../../api/project'
 
@@ -99,6 +99,12 @@ watch(
     activeSeq++
   }
 )
+
+// 父页面用 v-if 渲染这个组件时，切换项目会直接卸载，上面两个 watch 都收不到通知。
+// 卸载时同样要让在途请求作废，否则旧请求回来还会往新页面弹“操作成功”或失败提示。
+onBeforeUnmount(() => {
+  activeSeq++
+})
 
 function normalizeProjectId() {
   const id = Number(props.projectId)
